@@ -1,0 +1,20 @@
+{
+  "name": "anuragnama-frame",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "db:migrate": "node --env-file=.env.local scripts/migrate.mjs",
+    "db:seed-admin": "node --env-file=.env.local scripts/seed-admin.mjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.658.0",
+    "@aws-sdk/s3-request-presigner": "^3.658.0",
+    "@neondatabase/serverless": "^0.10.1",
+    "bcryptjs": "^2.4.3"
+  },
+  "devDependencies": {
+    "vercel": "^37.14.0"
+  }
+}

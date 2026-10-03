@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — অনুরাগনামা</title>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <h1>অনুরাগনামা — Admin</h1>
+        <div class="sub">Frame, stats &amp; uploads</div>
+      </div>
+      <button type="button" class="btn ghost" id="logout">Log out</button>
+    </div>
+
+    <section class="panel">
+      <h2>Overview</h2>
+      <div class="stat-grid">
+        <div class="stat">
+          <div class="num" id="statTotal">—</div>
+          <div class="lbl">Total frames created</div>
+        </div>
+        <div class="stat">
+          <div class="num" id="statToday">—</div>
+          <div class="lbl">Today</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Frames</h2>
+      <div class="row-actions" style="margin-bottom:14px">
+        <label class="btn primary" for="frameFile">Upload new frame</label>
+        <input type="file" id="frameFile" accept="image/png,image/webp" hidden />
+        <span class="loading" id="frameMsg"></span>
+      </div>
+      <div class="grid" id="framesGrid"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Uploaded images</h2>
+      <div class="grid" id="imagesGrid"></div>
+      <div class="row-actions" style="margin-top:14px">
+        <button type="button" class="btn" id="loadMore" hidden>Load more</button>
+        <span class="loading" id="imgMsg"></span>
+      </div>
+    </section>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

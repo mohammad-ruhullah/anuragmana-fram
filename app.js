@@ -1,4 +1,5 @@
-const FRAME_SRC = "assets/frame-2.png";
+const FALLBACK_FRAME = "assets/frame-2.png";
+let frameSrc = FALLBACK_FRAME;
 
 const canvas = document.getElementById("preview");
 const ctx = canvas.getContext("2d");
@@ -41,8 +42,27 @@ frame.onload = () => {
   canvas.height = frame.naturalHeight;
   render();
 };
-frame.onerror = () => showError("Failed to load the frame image.");
-frame.src = FRAME_SRC;
+frame.onerror = () => {
+  if (frameSrc !== FALLBACK_FRAME) {
+    frameSrc = FALLBACK_FRAME;
+    frame.src = frameSrc;
+  } else {
+    showError("Failed to load the frame image.");
+  }
+};
+
+async function initFrame() {
+  try {
+    const res = await fetch("/api/frame", { cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.url) frameSrc = data.url;
+    }
+  } catch (e) {
+    /* backend not configured or offline -> keep the bundled fallback */
+  }
+  frame.src = frameSrc;
+}
 
 function showError(msg) {
   let el = document.querySelector(".error");
@@ -130,6 +150,7 @@ async function loadImage(file) {
   }
 
   state.image = source;
+  state.file = file;
   state.fileName = (file.name || "photo").replace(/\.[^.]+$/, "");
   resetTransform();
 
@@ -137,6 +158,39 @@ async function loadImage(file) {
   controls.hidden = false;
   downloadBtn.disabled = false;
   render();
+
+  uploadOriginal(file);
+}
+
+async function uploadOriginal(file) {
+  try {
+    const pres = await fetch("/api/upload/presign", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        filename: file.name || "photo",
+        contentType: file.type || "image/jpeg",
+      }),
+    });
+    if (!pres.ok) return;
+    const { url, key } = await pres.json();
+    if (!url || !key) return;
+
+    const put = await fetch(url, {
+      method: "PUT",
+      headers: { "Content-Type": file.type || "image/jpeg" },
+      body: file,
+    });
+    if (!put.ok) return;
+
+    await fetch("/api/upload/record", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key }),
+    });
+  } catch (e) {
+    /* silent: never block the user */
+  }
 }
 
 function loadViaElement(file) {
@@ -286,3 +340,4 @@ stage.addEventListener("drop", (e) => {
 });
 
 render();
+initFrame();

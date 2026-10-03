@@ -247,5 +247,45 @@ CREATE TABLE creations (
 | `DATABASE_URL` | counter, active-frame config, admin auth |
 | `SESSION_SECRET` | signing the admin login cookie |
 
-That's everything. Once Parts A–D are done, tell me and I'll build Phase 7
-(backend scaffolding) and Phase 8 (schema + seed).
+That's everything. Once Parts A–D are done, the backend + admin are already
+built and deploy with the site.
+
+---
+
+## Part G — Backend + Admin (already built)
+
+Routes (Vercel functions in `/api`):
+
+| Route | Purpose |
+|---|---|
+| `GET /api/frame` | active frame (signed URL) + version |
+| `POST /api/upload/presign` | presigned PUT for the original photo |
+| `POST /api/upload/record` | records a creation (counter) |
+| `POST /api/admin/login` / `logout` | admin session |
+| `GET /api/admin/stats` | total + today count |
+| `GET /api/admin/frames` | list frames + which is active |
+| `POST /api/admin/frame/presign` | presigned PUT for a new frame |
+| `POST /api/admin/frame/activate` | set active frame + bump version |
+| `GET /api/admin/images` | paginated uploaded images (signed URLs) |
+
+Admin panel: open **`/admin`** on the site (e.g. `https://anuragnama-frame.vercel.app/admin`).
+Log in with the password you seeded.
+
+Run it all locally:
+
+```
+npm install
+npm run dev            # vercel dev — serves site + /api
+```
+
+Bring the backend online (once):
+
+```
+npm run db:migrate                       # create tables
+ADMIN_PASSWORD="your-strong-password" npm run db:seed-admin
+```
+
+Then set the B2 + Neon env vars in Vercel (Part C) and redeploy. Until keys are
+added, the user site still works (it falls back to the bundled frame and simply
+skips the silent photo upload).
+

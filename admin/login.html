@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login — অনুরাগনামা</title>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <div class="panel login-card">
+    <h2>Admin Login</h2>
+    <form id="form">
+      <label class="sr-only" for="password">Password</label>
+      <input type="password" id="password" placeholder="Password" autocomplete="current-password" required />
+      <button type="submit" class="btn green">Log in</button>
+    </form>
+    <p class="msg err" id="err"></p>
+  </div>
+  <script>
+    const form = document.getElementById("form");
+    const err = document.getElementById("err");
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      err.textContent = "";
+      const password = document.getElementById("password").value;
+      const btn = form.querySelector("button");
+      btn.disabled = true;
+      try {
+        const res = await fetch("/api/admin/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password }),
+        });
+        if (res.ok) {
+          window.location.href = "./";
+          return;
+        }
+        const data = await res.json().catch(() => ({}));
+        err.textContent = data.error || "Login failed";
+      } catch (e2) {
+        err.textContent = "Network error";
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
