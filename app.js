@@ -34,6 +34,7 @@ const state = {
 };
 
 const frame = new Image();
+frame.crossOrigin = "anonymous";
 let frameReady = false;
 
 frame.onload = () => {
@@ -211,20 +212,24 @@ function loadViaElement(file) {
 
 function download() {
   if (!state.image) return;
-  canvas.toBlob((blob) => {
-    if (!blob) {
-      showError("Could not create the image. Please try again.");
-      return;
-    }
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "framed-" + state.fileName + ".png";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }, "image/png");
+  try {
+    canvas.toBlob((b) => {
+      if (!b) {
+        showError("Could not create the image. Please try again.");
+        return;
+      }
+      const url = URL.createObjectURL(b);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "framed-" + state.fileName + ".png";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }, "image/png");
+  } catch (e) {
+    showError("Download failed. Please refresh and try again.");
+  }
 }
 
 function clampZoom(z) {
