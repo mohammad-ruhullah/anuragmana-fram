@@ -27,7 +27,29 @@ const bgRow = document.getElementById("bgRow");
 const bgColorInput = document.getElementById("bgColor");
 const bgTransparent = document.getElementById("bgTransparent");
 const bgStatus = document.getElementById("bgStatus");
-const swatchBtns = Array.from(document.querySelectorAll(".swatch"));
+const palette = document.getElementById("palette");
+
+const BASIC_COLORS = [
+  "#ffffff", "#f2f2f2", "#cfcfcf", "#8a8a8a", "#4a4a4a", "#000000",
+  "#f0d848", "#e0b81e", "#f0c090", "#e8863c", "#c0392b", "#a51b30",
+  "#3e6b2b", "#2f5220", "#7ec87e", "#3aa0c9", "#2c5fa8", "#7d4bb5",
+  "#ffd1dc", "#f7efcf",
+];
+
+function buildPalette() {
+  if (!palette) return;
+  palette.textContent = "";
+  for (const color of BASIC_COLORS) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "mini swatch";
+    b.dataset.color = color;
+    b.style.background = color;
+    b.setAttribute("aria-label", color);
+    palette.appendChild(b);
+  }
+}
+buildPalette();
 
 const state = {
   image: null,
@@ -287,10 +309,19 @@ function setBgStatus(text) {
   if (bgStatus) bgStatus.textContent = text || "";
 }
 
+function highlightSwatch(color) {
+  if (!palette) return;
+  const target = (color || "").toLowerCase();
+  palette.querySelectorAll(".swatch").forEach((b) => {
+    b.classList.toggle("selected", (b.dataset.color || "").toLowerCase() === target);
+  });
+}
+
 function updateBgUI() {
   undoBgBtn.hidden = !state.bgRemoved;
   bgRow.hidden = !state.bgRemoved;
   if (state.bgColor) bgColorInput.value = state.bgColor;
+  highlightSwatch(state.bgColor);
 }
 
 async function removeBackground() {
@@ -339,6 +370,7 @@ function undoBackground() {
 function setBackgroundColor(color) {
   state.bgColor = color;
   if (color) bgColorInput.value = color;
+  highlightSwatch(color);
   render();
 }
 
@@ -396,9 +428,10 @@ removeBgBtn.addEventListener("click", removeBackground);
 undoBgBtn.addEventListener("click", undoBackground);
 bgColorInput.addEventListener("input", () => setBackgroundColor(bgColorInput.value));
 bgTransparent.addEventListener("click", () => setBackgroundColor(null));
-swatchBtns.forEach((b) =>
-  b.addEventListener("click", () => setBackgroundColor(b.dataset.color))
-);
+palette.addEventListener("click", (e) => {
+  const b = e.target.closest(".swatch");
+  if (b) setBackgroundColor(b.dataset.color);
+});
 
 let dragging = false;
 let lastX = 0;
