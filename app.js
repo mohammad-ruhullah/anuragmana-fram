@@ -334,13 +334,30 @@ async function removeBackground() {
   setBgStatus("Loading model (first time may take a while)…");
   try {
     const mod = await loadBgRemoval();
-    setBgStatus("Removing background…");
+    const removeFn = mod.removeBackground || mod.default;
+    setBgStatus("Preparing model (first time can take a while)…");
     const source = state.originalBlob || state.file;
-    const outBlob = await mod.removeBackground(source, {
-      progress: (_key, current, total) => {
-        if (total) setBgStatus("Removing… " + Math.round((current / total) * 100) + "%");
+
+    const downloads = new Map();
+    const device = navigator.gpu ? "gpu" : "cpu";
+    const outBlob = await removeFn(source, {
+      model: "isnet_quint8",
+      device,
+      output: { format: "image/png" },
+      progress: (key, current, total) => {
+        if (!total) return;
+        downloads.set(key, { current, total });
+        let c = 0;
+        let t = 0;
+        for (const v of downloads.values()) {
+          c += v.current;
+          t += v.total;
+        }
+        if (t > 0 && c >= t) setBgStatus("Removing background…");
+        else if (t > 0) setBgStatus("Preparing model… " + Math.round((c / t) * 100) + "%");
       },
     });
+
     const bitmap = await createImageBitmap(outBlob);
     state.image = bitmap;
     state.bgRemoved = true;
