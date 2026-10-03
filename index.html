@@ -45,25 +45,32 @@
       </div>
 
       <section class="controls" id="controls" hidden>
-        <div class="row">
-          <label for="zoom">Zoom</label>
-          <button type="button" class="mini" id="zoomOut" aria-label="Zoom out">&minus;</button>
-          <input type="range" id="zoom" min="0.2" max="3" step="0.01" value="1" />
-          <button type="button" class="mini" id="zoomIn" aria-label="Zoom in">+</button>
-          <output id="zoomVal">1.00&times;</output>
-        </div>
+        <div class="group">
+          <div class="group-title">Transform</div>
 
-        <div class="row">
-          <label for="rotate">Rotate</label>
-          <button type="button" class="mini" id="rotL" aria-label="Rotate left">&#8634;</button>
-          <input type="range" id="rotate" min="0" max="360" step="1" value="0" />
-          <button type="button" class="mini" id="rotR" aria-label="Rotate right">&#8635;</button>
-          <output id="rotVal">0&deg;</output>
-        </div>
+          <div class="row">
+            <label for="zoom">Zoom</label>
+            <button type="button" class="mini" id="zoomOut" aria-label="Zoom out">&minus;</button>
+            <input type="range" id="zoom" min="0.2" max="3" step="0.01" value="1" />
+            <button type="button" class="mini" id="zoomIn" aria-label="Zoom in">+</button>
+            <output id="zoomVal">1.00&times;</output>
+          </div>
 
-          <div class="row wrap">
+          <div class="row">
+            <label for="rotate">Rotate</label>
+            <button type="button" class="mini" id="rotL" aria-label="Rotate left">&#8634;</button>
+            <input type="range" id="rotate" min="0" max="360" step="1" value="0" />
+            <button type="button" class="mini" id="rotR" aria-label="Rotate right">&#8635;</button>
+            <output id="rotVal">0&deg;</output>
+          </div>
+
+          <div class="row">
             <button type="button" class="btn ghost" id="resetBtn">Fit / Reset</button>
           </div>
+        </div>
+
+        <div class="group">
+          <div class="group-title">Background</div>
 
           <div class="row wrap">
             <button type="button" class="btn ghost" id="removeBgBtn">Remove background</button>
@@ -72,13 +79,14 @@
           </div>
 
           <div class="row wrap" id="bgRow" hidden>
-            <label for="bgColor">Background</label>
-            <input type="color" id="bgColor" value="#ffffff" title="Pick a custom color" />
+            <label for="bgColor">Color</label>
             <div class="palette" id="palette"></div>
+            <input type="color" id="bgColor" value="#ffffff" title="Pick a custom color" />
             <button type="button" class="mini" id="bgTransparent" title="Transparent">&#8709;</button>
           </div>
+        </div>
 
-          <p class="hint">Drag the photo on the frame to reposition it.</p>
+        <p class="hint">Drag the photo on the frame to reposition it.</p>
       </section>
     </div>
   </main>

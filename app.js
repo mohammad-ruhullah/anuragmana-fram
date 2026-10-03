@@ -27,12 +27,7 @@ const bgTransparent = document.getElementById("bgTransparent");
 const bgStatus = document.getElementById("bgStatus");
 const palette = document.getElementById("palette");
 
-const BASIC_COLORS = [
-  "#ffffff", "#f2f2f2", "#cfcfcf", "#8a8a8a", "#4a4a4a", "#000000",
-  "#f0d848", "#e0b81e", "#f0c090", "#e8863c", "#c0392b", "#a51b30",
-  "#3e6b2b", "#2f5220", "#7ec87e", "#3aa0c9", "#2c5fa8", "#7d4bb5",
-  "#ffd1dc", "#f7efcf",
-];
+const BASIC_COLORS = ["#ffffff", "#000000", "#f0d848", "#3e6b2b"];
 
 function buildPalette() {
   if (!palette) return;

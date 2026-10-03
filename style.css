@@ -199,12 +199,27 @@ h1 {
 .btn.ghost { flex: 0 0 auto; padding: 9px 14px; font-size: 0.85rem; }
 
 .controls {
-  margin-top: 18px;
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.group {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fffdf6;
+}
+
+.group-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--green);
 }
 
 .row {
@@ -333,7 +348,6 @@ h1 {
   .controls {
     grid-area: panel;
     margin-top: 0;
-    padding-top: 16px;
   }
 }
 
