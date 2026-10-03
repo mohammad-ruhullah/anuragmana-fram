@@ -24,7 +24,9 @@ const undoBgBtn = document.getElementById("undoBgBtn");
 const bgRow = document.getElementById("bgRow");
 const bgColorInput = document.getElementById("bgColor");
 const bgTransparent = document.getElementById("bgTransparent");
-const bgStatus = document.getElementById("bgStatus");
+const bgProgress = document.getElementById("bgProgress");
+const bgProgressFill = document.getElementById("bgProgressFill");
+const bgProgressText = document.getElementById("bgProgressText");
 const palette = document.getElementById("palette");
 const bgColorSwatch = document.getElementById("bgColorSwatch");
 
@@ -189,7 +191,7 @@ async function loadImage(file) {
   state.bgColor = null;
   resetTransform();
   updateBgUI();
-  setBgStatus("");
+  showProgress(false);
 
   stage.classList.add("has-image", "hide-hint");
   controls.hidden = false;
@@ -295,8 +297,43 @@ function loadBgRemoval() {
   return bgModulePromise;
 }
 
-function setBgStatus(text) {
-  if (bgStatus) bgStatus.textContent = text || "";
+function showProgress(show) {
+  if (bgProgress) bgProgress.hidden = !show;
+  if (!show) stopProgressTimer();
+}
+
+function setProgress(pct, label) {
+  if (bgProgressFill) {
+    bgProgressFill.classList.remove("working");
+    bgProgressFill.style.width = Math.max(0, Math.min(100, pct)) + "%";
+  }
+  if (bgProgressText && label != null) bgProgressText.textContent = label;
+}
+
+function setWorking(label) {
+  if (bgProgressFill) {
+    bgProgressFill.classList.add("working");
+    bgProgressFill.style.width = "100%";
+  }
+  if (bgProgressText && label != null) bgProgressText.textContent = label;
+}
+
+let bgProgressTimer = null;
+function stopProgressTimer() {
+  if (bgProgressTimer) {
+    clearInterval(bgProgressTimer);
+    bgProgressTimer = null;
+  }
+}
+function startProcessingProgress() {
+  stopProgressTimer();
+  let pct = 55;
+  setProgress(pct, "Removing background…");
+  bgProgressTimer = setInterval(() => {
+    pct += Math.max(0.4, (92 - pct) * 0.06);
+    if (pct > 92) pct = 92;
+    setProgress(pct, "Removing background…");
+  }, 250);
 }
 
 function highlightSwatch(color) {
@@ -330,22 +367,36 @@ async function removeBackground() {
   if (!state.image || state.bgRemoved || bgBusy) return;
   bgBusy = true;
   removeBgBtn.disabled = true;
-  const label = removeBgBtn.textContent;
-  setBgStatus("Loading model (first time may take a while)…");
+  showProgress(true);
+  setProgress(0, "Starting…");
+
+  let phase2 = false;
+  let sawProgress = false;
+  const startPhase2 = () => {
+    if (phase2) return;
+    phase2 = true;
+    startProcessingProgress();
+  };
+
   try {
     const mod = await loadBgRemoval();
     const removeFn = mod.removeBackground || mod.default;
-    setBgStatus("Preparing model (first time can take a while)…");
     const source = state.originalBlob || state.file;
+    const device = navigator.gpu ? "gpu" : "cpu";
+
+    setProgress(2, "Preparing model…");
+    const fallbackTimer = setTimeout(() => {
+      if (!sawProgress) startPhase2();
+    }, 500);
 
     const downloads = new Map();
-    const device = navigator.gpu ? "gpu" : "cpu";
     const outBlob = await removeFn(source, {
       model: "isnet_quint8",
       device,
       output: { format: "image/png" },
       progress: (key, current, total) => {
         if (!total) return;
+        sawProgress = true;
         downloads.set(key, { current, total });
         let c = 0;
         let t = 0;
@@ -353,26 +404,30 @@ async function removeBackground() {
           c += v.current;
           t += v.total;
         }
-        if (t > 0 && c >= t) setBgStatus("Removing background…");
-        else if (t > 0) setBgStatus("Preparing model… " + Math.round((c / t) * 100) + "%");
+        const frac = t ? c / t : 0;
+        setProgress(frac * 55, "Downloading model… " + Math.round(frac * 100) + "%");
+        if (c >= t) startPhase2();
       },
     });
+    clearTimeout(fallbackTimer);
+    stopProgressTimer();
 
+    setProgress(96, "Finishing up…");
     const bitmap = await createImageBitmap(outBlob);
     state.image = bitmap;
     state.bgRemoved = true;
     if (!state.bgColor) state.bgColor = "#ffffff";
     updateBgUI();
     render();
-    setBgStatus("Background removed.");
+    setProgress(100, "Background removed");
+    setTimeout(() => showProgress(false), 1000);
   } catch (e) {
     console.error(e);
-    setBgStatus("");
+    showProgress(false);
     showError("Background removal failed. Please try again.");
   } finally {
     bgBusy = false;
     removeBgBtn.disabled = false;
-    removeBgBtn.textContent = label;
   }
 }
 
@@ -381,7 +436,7 @@ function undoBackground() {
   state.image = state.originalImage;
   state.bgRemoved = false;
   state.bgColor = null;
-  setBgStatus("");
+  showProgress(false);
   updateBgUI();
   render();
 }

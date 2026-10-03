@@ -75,7 +75,13 @@
           <div class="row wrap">
             <button type="button" class="btn ghost" id="removeBgBtn">Remove background</button>
             <button type="button" class="btn ghost" id="undoBgBtn" hidden>Undo</button>
-            <span class="hint" id="bgStatus"></span>
+          </div>
+
+          <div class="progress" id="bgProgress" hidden>
+            <div class="progress-track">
+              <div class="progress-fill" id="bgProgressFill"></div>
+            </div>
+            <div class="progress-text" id="bgProgressText"></div>
           </div>
 
           <div class="row wrap" id="bgRow" hidden>
