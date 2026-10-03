@@ -3,7 +3,7 @@ const $ = (id) => document.getElementById(id);
 async function api(path, opts = {}) {
   const res = await fetch(path, { credentials: "include", ...opts });
   if (res.status === 401) {
-    window.location.href = "login.html";
+    window.location.href = "/admin/login.html";
     throw new Error("unauthorized");
   }
   const data = await res.json().catch(() => ({}));
@@ -143,7 +143,7 @@ $("logout").addEventListener("click", async () => {
   try {
     await fetch("/api/admin/logout", { method: "POST", credentials: "include" });
   } catch {}
-  window.location.href = "login.html";
+  window.location.href = "/admin/login.html";
 });
 
 $("frameFile").addEventListener("change", (e) => {
