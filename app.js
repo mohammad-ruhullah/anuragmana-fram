@@ -405,7 +405,7 @@ async function removeBackground() {
           t += v.total;
         }
         const frac = t ? c / t : 0;
-        setProgress(frac * 55, "Downloading model… " + Math.round(frac * 100) + "%");
+        setProgress(frac * 55, "Downloading model…");
         if (c >= t) startPhase2();
       },
     });
