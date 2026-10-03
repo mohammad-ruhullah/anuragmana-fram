@@ -266,14 +266,48 @@ h1 {
 
 #bgRow label { flex-basis: auto; }
 
-#bgColor {
-  width: 42px;
-  height: 30px;
-  padding: 2px;
+.color-picker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 10px;
   background: #fffef9;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
   cursor: pointer;
+  user-select: none;
+}
+
+.color-picker input[type="color"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.color-picker-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+
+.color-picker-swatch.transparent {
+  background:
+    linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%),
+    linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%),
+    #fff;
+  background-size: 8px 8px;
+  background-position: 0 0, 4px 4px;
 }
 
 .palette {

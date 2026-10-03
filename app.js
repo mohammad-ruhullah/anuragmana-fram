@@ -26,6 +26,7 @@ const bgColorInput = document.getElementById("bgColor");
 const bgTransparent = document.getElementById("bgTransparent");
 const bgStatus = document.getElementById("bgStatus");
 const palette = document.getElementById("palette");
+const bgColorSwatch = document.getElementById("bgColorSwatch");
 
 const BASIC_COLORS = ["#ffffff", "#000000", "#f0d848", "#3e6b2b"];
 
@@ -306,11 +307,23 @@ function highlightSwatch(color) {
   });
 }
 
+function updateSwatchDot() {
+  if (!bgColorSwatch) return;
+  if (state.bgColor) {
+    bgColorSwatch.classList.remove("transparent");
+    bgColorSwatch.style.background = state.bgColor;
+  } else {
+    bgColorSwatch.classList.add("transparent");
+    bgColorSwatch.style.background = "";
+  }
+}
+
 function updateBgUI() {
   undoBgBtn.hidden = !state.bgRemoved;
   bgRow.hidden = !state.bgRemoved;
   if (state.bgColor) bgColorInput.value = state.bgColor;
   highlightSwatch(state.bgColor);
+  updateSwatchDot();
 }
 
 async function removeBackground() {
@@ -360,6 +373,7 @@ function setBackgroundColor(color) {
   state.bgColor = color;
   if (color) bgColorInput.value = color;
   highlightSwatch(color);
+  updateSwatchDot();
   render();
 }
 

@@ -81,7 +81,11 @@
           <div class="row wrap" id="bgRow" hidden>
             <label for="bgColor">Color</label>
             <div class="palette" id="palette"></div>
-            <input type="color" id="bgColor" value="#ffffff" title="Pick a custom color" />
+            <label class="color-picker" title="Pick a custom color">
+              <input type="color" id="bgColor" value="#ffffff" aria-label="Pick a custom color" />
+              <span class="color-picker-swatch" id="bgColorSwatch"></span>
+              <span>Custom</span>
+            </label>
             <button type="button" class="mini" id="bgTransparent" title="Transparent">&#8709;</button>
           </div>
         </div>
