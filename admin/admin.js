@@ -30,9 +30,8 @@ function tile({ imgSrc, label, active, actions = [] }) {
 
 async function loadStats() {
   try {
-    const { total, today } = await api("/api/admin/stats");
+    const { total } = await api("/api/admin/stats");
     $("statTotal").textContent = total;
-    $("statToday").textContent = today;
   } catch (e) {
     if (e.message !== "unauthorized") console.error(e);
   }
