@@ -18,8 +18,6 @@ const rotateInput = document.getElementById("rotate");
 const rotL = document.getElementById("rotL");
 const rotR = document.getElementById("rotR");
 const rotVal = document.getElementById("rotVal");
-const flipHBtn = document.getElementById("flipH");
-const flipVBtn = document.getElementById("flipV");
 const resetBtn = document.getElementById("resetBtn");
 const removeBgBtn = document.getElementById("removeBgBtn");
 const undoBgBtn = document.getElementById("undoBgBtn");
@@ -60,8 +58,6 @@ const state = {
   rotation: 0,
   offsetX: 0,
   offsetY: 0,
-  flipH: false,
-  flipV: false,
   bgRemoved: false,
   bgColor: null,
 };
@@ -141,7 +137,7 @@ function render() {
     ctx.save();
     ctx.translate(W / 2 + state.offsetX, H / 2 + state.offsetY);
     ctx.rotate((state.rotation * Math.PI) / 180);
-    ctx.scale(s * (state.flipH ? -1 : 1), s * (state.flipV ? -1 : 1));
+    ctx.scale(s, s);
     ctx.drawImage(state.image, -iw / 2, -ih / 2, iw, ih);
     ctx.restore();
   }
@@ -154,8 +150,6 @@ function resetTransform() {
   state.rotation = 0;
   state.offsetX = 0;
   state.offsetY = 0;
-  state.flipH = false;
-  state.flipV = false;
   syncControls();
 }
 
@@ -411,14 +405,6 @@ rotR.addEventListener("click", () => {
   updateTransforms();
 });
 
-flipHBtn.addEventListener("click", () => {
-  state.flipH = !state.flipH;
-  render();
-});
-flipVBtn.addEventListener("click", () => {
-  state.flipV = !state.flipV;
-  render();
-});
 resetBtn.addEventListener("click", () => {
   resetTransform();
   render();
