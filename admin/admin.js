@@ -18,14 +18,14 @@ function el(tag, props = {}, children = []) {
   return node;
 }
 
-function tile({ imgSrc, label, active, action }) {
+function tile({ imgSrc, label, active, actions = [] }) {
   const thumb = el("div", { className: "thumb" });
   if (imgSrc) thumb.append(el("img", { src: imgSrc, alt: label || "frame", loading: "lazy" }));
   const meta = el("div", { className: "meta" }, [document.createTextNode(label || "")]);
-  const actions = el("div", { className: "tile-actions" });
-  if (active) actions.append(el("span", { className: "badge" }, [document.createTextNode("Active")]));
-  if (action) actions.append(action);
-  return el("div", { className: "tile" }, [thumb, meta, actions]);
+  const actionsEl = el("div", { className: "tile-actions" });
+  if (active) actionsEl.append(el("span", { className: "badge" }, [document.createTextNode("Active")]));
+  for (const a of actions) actionsEl.append(a);
+  return el("div", { className: "tile" }, [thumb, meta, actionsEl]);
 }
 
 async function loadStats() {
@@ -55,7 +55,7 @@ async function loadFrames() {
         action = el("button", { className: "btn green sm", type: "button" }, [document.createTextNode("Set active")]);
         action.addEventListener("click", () => activateFrame(f.key, action));
       }
-      grid.append(tile({ imgSrc: f.url, label: name, active: f.active, action }));
+      grid.append(tile({ imgSrc: f.url, label: name, active: f.active, actions: action ? [action] : [] }));
     }
     msg.textContent = "";
   } catch (e) {
@@ -128,7 +128,9 @@ async function loadImages(append = false) {
       const link = el("a", { className: "btn sm", href: im.url, target: "_blank", rel: "noopener" }, [
         document.createTextNode("Open"),
       ]);
-      grid.append(tile({ imgSrc: im.url, label: name, action: link }));
+      const del = el("button", { className: "btn danger sm", type: "button" }, [document.createTextNode("Delete")]);
+      del.addEventListener("click", () => deleteImage(im.key, del));
+      grid.append(tile({ imgSrc: im.url, label: name, actions: [link, del] }));
     }
     imagesToken = nextToken;
     more.hidden = !nextToken;
@@ -136,6 +138,29 @@ async function loadImages(append = false) {
   } catch (e) {
     msg.className = "loading msg err";
     msg.textContent = e.message;
+  }
+}
+
+async function deleteImage(key, btn) {
+  if (!window.confirm("Delete this image? This cannot be undone.")) return;
+  btn.disabled = true;
+  btn.textContent = "Deleting…";
+  try {
+    await api("/api/admin/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key }),
+    });
+    const tileEl = btn.closest(".tile");
+    if (tileEl) tileEl.remove();
+    const grid = $("imagesGrid");
+    if (grid && !grid.querySelector(".tile")) {
+      grid.append(el("p", { className: "loading" }, [document.createTextNode("No uploads yet.")]));
+    }
+  } catch (e) {
+    alert("Could not delete: " + e.message);
+    btn.disabled = false;
+    btn.textContent = "Delete";
   }
 }
 

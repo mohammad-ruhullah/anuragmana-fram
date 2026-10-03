@@ -97,6 +97,14 @@ body {
   border: none;
 }
 
+.btn.danger {
+  background: var(--danger);
+  color: #fff;
+  border: none;
+}
+
+.btn.danger:hover { background: #8a1c19; }
+
 .btn.ghost { background: transparent; }
 
 .btn.sm { padding: 8px 12px; font-size: 0.82rem; }
@@ -136,7 +144,7 @@ body {
 
 .tile .meta { padding: 8px 10px; font-size: 0.72rem; color: var(--muted); word-break: break-all; }
 
-.tile .tile-actions { padding: 0 10px 10px; display: flex; gap: 8px; }
+.tile .tile-actions { padding: 0 10px 10px; display: flex; gap: 8px; flex-wrap: wrap; }
 
 .badge {
   display: inline-block;
