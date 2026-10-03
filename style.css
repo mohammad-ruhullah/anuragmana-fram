@@ -247,6 +247,20 @@ h1 {
 
 .mini:active { transform: translateY(1px); }
 
+.mini.swatch { padding: 0; }
+
+#bgRow label { flex-basis: auto; }
+
+#bgColor {
+  width: 42px;
+  height: 30px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fffef9;
+  cursor: pointer;
+}
+
 .hint {
   margin: 0;
   color: #a08f5c;

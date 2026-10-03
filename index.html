@@ -61,13 +61,29 @@
           <output id="rotVal">0&deg;</output>
         </div>
 
-        <div class="row wrap">
-          <button type="button" class="btn ghost" id="flipH">Flip H</button>
-          <button type="button" class="btn ghost" id="flipV">Flip V</button>
-          <button type="button" class="btn ghost" id="resetBtn">Fit / Reset</button>
-        </div>
+          <div class="row wrap">
+            <button type="button" class="btn ghost" id="flipH">Flip H</button>
+            <button type="button" class="btn ghost" id="flipV">Flip V</button>
+            <button type="button" class="btn ghost" id="resetBtn">Fit / Reset</button>
+          </div>
 
-        <p class="hint">Drag the photo on the frame to reposition it.</p>
+          <div class="row wrap">
+            <button type="button" class="btn ghost" id="removeBgBtn">Remove background</button>
+            <button type="button" class="btn ghost" id="undoBgBtn" hidden>Undo</button>
+            <span class="hint" id="bgStatus"></span>
+          </div>
+
+          <div class="row wrap" id="bgRow" hidden>
+            <label for="bgColor">Background</label>
+            <input type="color" id="bgColor" value="#ffffff" />
+            <button type="button" class="mini swatch" data-color="#ffffff" style="background:#ffffff" aria-label="White"></button>
+            <button type="button" class="mini swatch" data-color="#000000" style="background:#000000" aria-label="Black"></button>
+            <button type="button" class="mini swatch" data-color="#f0d848" style="background:#f0d848" aria-label="Gold"></button>
+            <button type="button" class="mini swatch" data-color="#3e6b2b" style="background:#3e6b2b" aria-label="Green"></button>
+            <button type="button" class="mini" id="bgTransparent" title="Transparent">&#8709;</button>
+          </div>
+
+          <p class="hint">Drag the photo on the frame to reposition it.</p>
       </section>
     </div>
   </main>

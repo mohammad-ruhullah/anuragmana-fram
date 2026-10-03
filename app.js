@@ -21,9 +21,18 @@ const rotVal = document.getElementById("rotVal");
 const flipHBtn = document.getElementById("flipH");
 const flipVBtn = document.getElementById("flipV");
 const resetBtn = document.getElementById("resetBtn");
+const removeBgBtn = document.getElementById("removeBgBtn");
+const undoBgBtn = document.getElementById("undoBgBtn");
+const bgRow = document.getElementById("bgRow");
+const bgColorInput = document.getElementById("bgColor");
+const bgTransparent = document.getElementById("bgTransparent");
+const bgStatus = document.getElementById("bgStatus");
+const swatchBtns = Array.from(document.querySelectorAll(".swatch"));
 
 const state = {
   image: null,
+  originalImage: null,
+  originalBlob: null,
   fileName: "photo",
   zoom: 1,
   rotation: 0,
@@ -31,7 +40,11 @@ const state = {
   offsetY: 0,
   flipH: false,
   flipV: false,
+  bgRemoved: false,
+  bgColor: null,
 };
+
+let bgBusy = false;
 
 const frame = new Image();
 frame.crossOrigin = "anonymous";
@@ -92,6 +105,11 @@ function render() {
   const H = canvas.height;
   ctx.clearRect(0, 0, W, H);
 
+  if (state.bgColor) {
+    ctx.fillStyle = state.bgColor;
+    ctx.fillRect(0, 0, W, H);
+  }
+
   if (state.image) {
     const iw = imgW();
     const ih = imgH();
@@ -151,9 +169,15 @@ async function loadImage(file) {
   }
 
   state.image = source;
+  state.originalImage = source;
+  state.originalBlob = file;
   state.file = file;
   state.fileName = (file.name || "photo").replace(/\.[^.]+$/, "");
+  state.bgRemoved = false;
+  state.bgColor = null;
   resetTransform();
+  updateBgUI();
+  setBgStatus("");
 
   stage.classList.add("has-image", "hide-hint");
   controls.hidden = false;
@@ -236,6 +260,88 @@ function clampZoom(z) {
   return Math.min(3, Math.max(0.2, z));
 }
 
+const BG_REMOVAL_CDNS = [
+  "https://esm.sh/@imgly/background-removal@1.7.0",
+  "https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm",
+];
+
+let bgModulePromise = null;
+function loadBgRemoval() {
+  if (!bgModulePromise) {
+    bgModulePromise = (async () => {
+      let lastErr;
+      for (const url of BG_REMOVAL_CDNS) {
+        try {
+          return await import(url);
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+      throw lastErr || new Error("could not load background removal");
+    })();
+  }
+  return bgModulePromise;
+}
+
+function setBgStatus(text) {
+  if (bgStatus) bgStatus.textContent = text || "";
+}
+
+function updateBgUI() {
+  undoBgBtn.hidden = !state.bgRemoved;
+  bgRow.hidden = !state.bgRemoved;
+  if (state.bgColor) bgColorInput.value = state.bgColor;
+}
+
+async function removeBackground() {
+  if (!state.image || state.bgRemoved || bgBusy) return;
+  bgBusy = true;
+  removeBgBtn.disabled = true;
+  const label = removeBgBtn.textContent;
+  setBgStatus("Loading model (first time may take a while)…");
+  try {
+    const mod = await loadBgRemoval();
+    setBgStatus("Removing background…");
+    const source = state.originalBlob || state.file;
+    const outBlob = await mod.removeBackground(source, {
+      progress: (_key, current, total) => {
+        if (total) setBgStatus("Removing… " + Math.round((current / total) * 100) + "%");
+      },
+    });
+    const bitmap = await createImageBitmap(outBlob);
+    state.image = bitmap;
+    state.bgRemoved = true;
+    if (!state.bgColor) state.bgColor = "#ffffff";
+    updateBgUI();
+    render();
+    setBgStatus("Background removed.");
+  } catch (e) {
+    console.error(e);
+    setBgStatus("");
+    showError("Background removal failed. Please try again.");
+  } finally {
+    bgBusy = false;
+    removeBgBtn.disabled = false;
+    removeBgBtn.textContent = label;
+  }
+}
+
+function undoBackground() {
+  if (!state.originalImage) return;
+  state.image = state.originalImage;
+  state.bgRemoved = false;
+  state.bgColor = null;
+  setBgStatus("");
+  updateBgUI();
+  render();
+}
+
+function setBackgroundColor(color) {
+  state.bgColor = color;
+  if (color) bgColorInput.value = color;
+  render();
+}
+
 chooseBtn.addEventListener("click", () => fileInput.click());
 stage.addEventListener("click", () => {
   if (!state.image) fileInput.click();
@@ -285,6 +391,14 @@ resetBtn.addEventListener("click", () => {
   resetTransform();
   render();
 });
+
+removeBgBtn.addEventListener("click", removeBackground);
+undoBgBtn.addEventListener("click", undoBackground);
+bgColorInput.addEventListener("input", () => setBackgroundColor(bgColorInput.value));
+bgTransparent.addEventListener("click", () => setBackgroundColor(null));
+swatchBtns.forEach((b) =>
+  b.addEventListener("click", () => setBackgroundColor(b.dataset.color))
+);
 
 let dragging = false;
 let lastX = 0;
