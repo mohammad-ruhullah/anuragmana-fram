@@ -1,6 +1,6 @@
-import { requireAuth } from "../../lib/auth.js";
-import { setConfig, bumpFrameVersion } from "../../lib/db.js";
-import { only, readJson } from "../../lib/http.js";
+import { requireAuth } from "../../../lib/auth.js";
+import { setConfig, bumpFrameVersion } from "../../../lib/db.js";
+import { only, readJson } from "../../../lib/http.js";
 
 export default async function handler(req, res) {
   if (!only(req, res, "POST")) return;
