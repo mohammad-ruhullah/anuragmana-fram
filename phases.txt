@@ -1,0 +1,68 @@
+ANURAGNAMA FRAME SITE - PHASES
+================================
+Workflow: after EACH phase I will tell you (a) what was done and (b) exactly
+how to test it. You test, confirm, then I continue to the next phase.
+
+Phase 1 - Project skeleton + page shell
+  - Create project structure; move frame PNG into assets/.
+  - index.html, style.css, app.js skeleton.
+  - Canvas shows the frame on a neutral checker background.
+  Test: open the page, frame renders and is responsive.
+
+Phase 2 - Upload + cover-fit photo behind the frame
+  - File input (accept=image/*) + drag & drop.
+  - Draw photo with cover fit, then frame on top; live preview.
+  Test: pick different photos (square/portrait/landscape), photo shows in window.
+
+Phase 3 - Download framed PNG
+  - Render canvas -> toBlob -> download as framed-<name>.png.
+  Test: download and open file; frame aligns, photo visible.
+
+Phase 4 - Editor: zoom
+  - Zoom slider + [+]/[-] buttons (0.2x-3x), live re-render.
+  Test: zoom changes crop; buttons and slider work.
+
+Phase 5 - Editor: rotate + pan + fit/reset
+  - Rotate 90-degree steps + fine angle; drag to pan (pointer events);
+    Fit/Reset button; optional flip.
+  Test: rotate, drag with mouse, reset; works on desktop.
+
+Phase 6 - Mobile / touch + EXIF orientation
+  - Touch dragging, mobile layout, createImageBitmap imageOrientation fix.
+  Test: use on a phone; portrait photos from camera upright.
+
+Phase 7 - Backend scaffolding on Vercel
+  - package.json, lib/db.js, lib/b2.js, /api/frame health route, env vars.
+  Test: run locally / deploy; /api/frame returns the active frame info.
+
+Phase 8 - Neon schema + admin seed
+  - migrations + seed script (admins, config, creations tables).
+  Test: run script; tables exist; admin row created.
+
+Phase 9 - Presigned upload + silent B2 upload
+  - /api/upload/presign; browser PUTs original to B2; CORS.
+  Test: upload a photo; object appears under uploads/ in B2 bucket.
+
+Phase 10 - Record endpoint + counter
+  - /api/upload/record inserts into creations; silent, failsafe.
+  Test: each framed image increments the count.
+
+Phase 11 - Admin auth
+  - /api/admin/login + logout, signed HttpOnly cookie, middleware guard.
+  Test: wrong password rejected; correct password opens /admin.
+
+Phase 12 - Admin dashboard (count)
+  - /api/admin/stats + dashboard page.
+  Test: total frames created displays correctly.
+
+Phase 13 - Admin frame library + upload + activate
+  - List frames, preview, mark active, upload new, activate (bump version).
+  Test: upload/select a frame; user site picks it up.
+
+Phase 14 - Admin uploaded-images gallery
+  - /api/admin/images; paginated grid with presigned GET thumbnails.
+  Test: all uploaded images browsable; open full image.
+
+Phase 15 - Polish + deploy
+  - Caching, cache-bust on frame change, rate limit, final Vercel deploy.
+  Test: full end-to-end on the production URL.

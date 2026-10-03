@@ -1,0 +1,237 @@
+ANURAGNAMA FRAME SITE - PLAN
+================================
+
+Goal
+  Simple static user site: upload a photo, edit it (zoom/rotate/pan),
+  download it inside the festive frame. Plus a protected admin site to
+  change the frame and see how many frames have been made. Uploaded
+  originals are stored in Backblaze B2.
+
+Decisions (locked)
+  - Save to B2:          the ORIGINAL uploaded photo
+  - Config / counter DB: Neon Postgres (Vercel integration)
+  - Admin scope:         frame library + select/upload active frame,
+                         total count, and browse ALL uploaded images
+  - Privacy notice:      none (UI unchanged)
+  - Admin auth:          password hash stored in Neon
+  - Hosting:             Vercel (static + serverless functions)
+  - B2:                  not set up yet -> include setup steps
+
+
+ARCHITECTURE
+============
+  User site (UI unchanged)
+     | canvas composite (upload / edit / download)   <- unchanged
+     +- silently: presigned PUT ---------> Backblaze B2   (original photo + frames)
+     +- silently: POST /api/upload/record -> Neon DB (insert row -> count)
+
+  Admin site /admin (protected)
+     +- change active frame --> B2 + config row in Neon
+     +- total count ---------> Neon COUNT(*)
+
+  Stack: Vercel (static + serverless) | Backblaze B2 (S3 API) | Neon Postgres
+
+
+ASSET
+=====
+  assets/anuragnama_frame_festive_transparent.png
+  1920x1920, festive red/orange border, center transparent (photo window).
+
+
+PROJECT STRUCTURE
+=================
+  index.html                 user site
+  style.css
+  app.js
+  assets/anuragnama_frame_festive_transparent.png
+  admin/                     admin pages (login, dashboard)
+  api/                       Vercel serverless functions
+    frame.js
+    upload/presign.js
+    upload/record.js
+    admin/login.js
+    admin/logout.js
+    admin/stats.js
+    admin/images.js
+    admin/frames.js
+    admin/frame/presign.js
+    admin/frame/activate.js
+  lib/
+    b2.js                    S3-compatible client + presign helpers
+    db.js                    Neon client + queries
+    auth.js                  session cookie helpers
+  middleware.js              protects /admin* and /api/admin/*
+  SETUP.md                   B2 + Neon setup instructions
+  package.json
+
+
+USER SITE (UI UNCHANGED)
+========================
+  Behavior
+    1. User picks/drops a photo (file input accept="image/*", drag-drop,
+       mobile capture).
+    2. Load via createImageBitmap(file, { imageOrientation: 'from-image' })
+       to fix EXIF rotation.
+    3. Composite on a 1920x1920 canvas:
+         - draw photo with "cover" fit (scale to fill, center-crop),
+         - drawImage(frame, 0, 0, 1920, 1920) on top; transparent center
+           reveals photo.
+    4. Show live preview immediately.
+    5. Download:
+         canvas.toBlob('image/png') -> object URL -> <a download="framed-<name>.png">.
+    6. Reset / choose another.
+
+  Photo Editor (before framing)
+    State: offsetX, offsetY, scale, rotation.
+    Controls:
+      - Zoom in/out: slider + [+]/[-] buttons (range ~0.2x to 3x).
+      - Rotate: 90-degree step buttons + fine angle (0-360).
+      - Pan: drag the photo on the canvas (mouse + touch).
+      - Fit / Center: reset position, scale, rotation.
+      - Optional: flip horizontal / vertical.
+    Implementation:
+      - ctx.save() / translate() / rotate() / scale() / drawImage() /
+        ctx.restore() before drawing the frame.
+      - Cover-fit is the starting scale; user edits layer on top.
+      - Re-render on every control/drag change (requestAnimationFrame throttle).
+      - Pointer events so it works on mouse + mobile.
+    Live preview reflects every edit in real time.
+
+  Background upload (silent, UI untouched)
+    1. POST /api/upload/presign -> short-lived presigned PUT URL + key.
+    2. Browser PUTs the ORIGINAL file to B2.
+    3. POST /api/upload/record -> insert row in Neon.
+    4. Wrapped in try/catch so a failed upload NEVER affects the user; they
+       still download locally as usual.
+    Note: browser -> B2 direct upload avoids Vercel's ~4.5 MB function body limit.
+
+
+BACKBLAZE B2 STORAGE
+====================
+  Layout:
+    frames/active/frame.png
+    frames/history/<ts>.png
+    uploads/<yyyy>/<mm>/<uuid>.<ext>       <- original photo
+
+  - S3-compatible endpoint: https://s3.<region>.backblazeb2.com
+  - Client: @aws-sdk/client-s3 (or lighter aws4fetch) inside Vercel functions.
+  - Bucket must have a CORS rule allowing PUT/GET from the site origin.
+
+
+NEON POSTGRES SCHEMA
+====================
+  CREATE TABLE admins (
+    id serial PRIMARY KEY,
+    password_hash text NOT NULL,
+    created_at timestamptz DEFAULT now()
+  );
+
+  CREATE TABLE config (            -- active frame pointer + version
+    key text PRIMARY KEY,
+    value text
+  );  -- rows: active_frame_key, frame_version
+
+  CREATE TABLE creations (         -- one row per framed image made
+    id bigserial PRIMARY KEY,
+    object_key text,               -- B2 key of the saved original
+    created_at timestamptz DEFAULT now()
+  );
+
+  - Total count = SELECT count(*) FROM creations
+    (per-day chart possible later for free).
+  - Admin login checks admins.password_hash (bcrypt).
+  - Driver: @neondatabase/serverless; DATABASE_URL auto-injected by the
+    Vercel Neon integration.
+
+
+API ROUTES (Vercel, Node runtime)
+=================================
+  GET  /api/frame                -> { url, version }   (active frame, short cache)
+  POST /api/upload/presign       -> presigned PUT + key
+  POST /api/upload/record        -> INSERT into creations
+  POST /api/admin/login | logout
+  GET  /api/admin/stats          -> { total }
+  GET  /api/admin/images         -> paginated list of uploads/ + presigned GET URLs
+  GET  /api/admin/frames         -> list all frames/ + presigned GET URLs + active flag
+  POST /api/admin/frame/presign  -> presigned PUT for a new frame
+  POST /api/admin/frame/activate -> set active_frame_key + bump frame_version
+
+
+ADMIN SITE (/admin)
+===================
+  - Login: password hash stored in Neon -> signed HttpOnly cookie;
+    middleware guards /admin* and /api/admin/*.
+  - Dashboard: total frames created (from creations table).
+  - Uploaded images gallery: browse ALL uploaded originals (list objects under
+    uploads/ in B2, paginated), with thumbnails via short-lived presigned GET
+    URLs and a click-to-open/download full image.
+  - Frame library: list ALL frames in B2 (frames/active + frames/history),
+    preview them, mark which one is ACTIVE.
+  - Upload frame: upload a new PNG -> presigned PUT to B2 ->
+    option to activate immediately; activating sets active_frame_key +
+    bumps frame_version (cache-bust for users).
+  - Select active frame: switch among existing frames with one click.
+
+
+
+ENV VARS (Vercel)
+=================
+  B2_KEY_ID
+  B2_APP_KEY
+  B2_BUCKET
+  B2_REGION
+  B2_ENDPOINT
+  SESSION_SECRET
+  DATABASE_URL        (auto-added by Neon integration)
+
+
+BACKBLAZE B2 SETUP (STEP-BY-STEP)
+=================================
+  1. Account: create at backblaze.com, enable B2 Cloud Storage.
+  2. Bucket: create a PRIVATE bucket, e.g. anuragnama-frames.
+     Note its region/endpoint, e.g. s3.us-west-004.backblazeb2.com.
+  3. Application Key: create an app key scoped to that bucket.
+     Copy keyID + applicationKey (secret shown only once).
+  4. CORS rule (Bucket Settings -> CORS) so the browser can PUT/GET:
+       [{ "corsRuleName": "web",
+          "allowedOrigins": ["https://<your-app>.vercel.app", "http://localhost:3000"],
+          "allowedOperations": ["s3_put","s3_get","s3_head"],
+          "allowedHeaders": ["*"],
+          "exposeHeaders": ["etag"],
+          "maxAgeSeconds": 3600 }]
+  5. Env vars in Vercel (see ENV VARS above).
+  6. Optional: lifecycle rule to expire old uploads if not kept forever.
+
+
+BUILD PHASES
+============
+  1. Base user site: upload, canvas composite, editor, preview, download.
+  2. Neon schema + DB helper.
+  3. B2 client + presigned upload route + silent background upload (UI untouched).
+  4. /api/upload/record counter.
+  5. Admin auth (password seeded in Neon) + middleware.
+  6. Admin dashboard: total count.
+  7. Admin uploaded-images gallery (list B2 uploads/ + presigned GET).
+  8. Admin frame library + upload new frame + select active frame.
+  9. Polish: caching, cache-bust on frame change, basic rate limit.
+
+
+VERIFICATION
+============
+  - Test square, portrait, landscape, EXIF-rotated photos.
+  - Confirm downloaded PNG frame aligns edge-to-edge and photo shows through window.
+  - Test zoom, rotate, pan (mouse + touch) and Fit/Reset behave correctly.
+  - Confirm downloaded PNG matches the edited preview exactly.
+  - Confirm each user action creates one row in creations and one object in B2.
+  - Confirm admin can log in, replace the frame, select the active frame,
+    and see the total count.
+  - Confirm admin can browse all uploaded images (paginated, thumbnails load).
+  - Confirm a failed B2 upload does not break the user download.
+
+
+NOTES / RISKS
+=============
+  - Saving user photos with no notice has privacy/legal implications;
+    proceeding as requested (zero UI change).
+  - Frame must stay PNG with a transparent center or the photo window breaks.
+  - Keep B2 keys server-side only; presigned URLs short-lived.
