@@ -1,4 +1,4 @@
-const FRAME_SRC = "assets/anuragnama_frame_festive_transparent.png";
+const FRAME_SRC = "assets/frame-2.png";
 
 const canvas = document.getElementById("preview");
 const ctx = canvas.getContext("2d");
